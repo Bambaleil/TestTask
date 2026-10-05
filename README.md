@@ -85,7 +85,7 @@ make pre-commit
 ```
 
 Pre-commit проверяет Ruff и mypy; pre-push запускает изолированные тесты и
-строгую сборку документации. CI проверяет Python 3.12/3.14.
+строгую сборку документации. CI проверяет Python 3.12.
 [Тестирование](docs/guides/testing.md).
 
 ## Документация и changelog

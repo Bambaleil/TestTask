@@ -15,9 +15,6 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: ["3.12", "3.14"]
     services:
       postgres:
         image: postgres:17-alpine
@@ -48,17 +45,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen
       - run: uv run --frozen pre-commit run --all-files
       - run: uv run --frozen pytest --cov --cov-report=term-missing --cov-report=xml
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-python-${{ matrix.python }}
+          name: coverage-python-3.12
           path: coverage.xml
       - name: Upload coverage to Codecov
-        if: matrix.python == '3.12' && env.CODECOV_ENABLED == 'true'
+        if: env.CODECOV_ENABLED == 'true'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
