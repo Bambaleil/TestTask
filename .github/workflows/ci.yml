@@ -1,0 +1,83 @@
+name: Quality and tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.12", "3.14"]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: payments
+          POSTGRES_PASSWORD: test-postgres-password
+          POSTGRES_DB: payments_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U payments -d payments_test"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+      rabbitmq:
+        image: rabbitmq:4-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: payments
+          RABBITMQ_DEFAULT_PASS: test-rabbit-password
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    env:
+      CODECOV_ENABLED: ${{ secrets.CODECOV_TOKEN != '' }}
+      TEST_DATABASE_URL: postgresql+asyncpg://payments:test-postgres-password@localhost:5432/payments_test
+      TEST_RABBITMQ_URL: amqp://payments:test-rabbit-password@localhost:5672/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run --frozen pre-commit run --all-files
+      - run: uv run --frozen pytest --cov --cov-report=term-missing --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-python-${{ matrix.python }}
+          path: coverage.xml
+      - name: Upload coverage to Codecov
+        if: matrix.python == '3.12' && env.CODECOV_ENABLED == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          disable_search: true
+          disable_telem: true
+          fail_ci_if_error: true
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen --group docs
+      - run: uv run --frozen --group docs mkdocs build --strict
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: .build/docs/

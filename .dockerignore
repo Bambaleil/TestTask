@@ -1,0 +1,17 @@
+.git
+.venv
+.idea
+.env
+**/.env
+deploy/
+docs/
+__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+site/
+.build/
+.git-history-backup-*.tar.gz

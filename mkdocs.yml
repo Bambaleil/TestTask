@@ -1,0 +1,68 @@
+site_name: Асинхронный сервис платежей
+site_description: Архитектура, контракты и эксплуатация сервиса платежей
+site_dir: .build/docs
+strict: true
+use_directory_urls: false
+nav:
+  - Обзор: index.md
+  - Разработка:
+      - Быстрый запуск: guides/quickstart.md
+      - Тестирование: guides/testing.md
+  - Архитектура:
+      - Структура проекта: tech/project_structure.md
+      - Слои и паттерны: tech/application_layers.md
+      - Ядро:
+          - Назначение: tech/core/index.md
+          - Автодокументация: tech/core/autodoc.md
+      - Платежи:
+          - Назначение и правила: tech/modules/payments/index.md
+          - HTTP и события: tech/modules/payments/contracts.md
+          - Автодокументация: tech/modules/payments/autodoc.md
+  - Эксплуатация:
+      - Надёжность и сбои: ops/reliability.md
+      - Docker и настройки: ops/deployment.md
+      - Логи и healthcheck: ops/observability.md
+theme:
+  name: material
+  language: ru
+  font: false
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Тёмная тема
+    - scheme: slate
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Светлая тема
+plugins:
+  - search:
+      lang: [ru, en]
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            docstring_options:
+              warn_missing_types: false
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences

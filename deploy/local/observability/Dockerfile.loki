@@ -1,0 +1,5 @@
+FROM busybox:1.37.0-musl AS probe
+
+FROM grafana/loki:3.7.0
+# Статический BusyBox добавляет HTTP-пробник в образ без shell и libc.
+COPY --from=probe /bin/busybox /usr/local/bin/busybox

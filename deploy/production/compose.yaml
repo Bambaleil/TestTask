@@ -1,0 +1,62 @@
+name: payments
+
+x-runtime: &runtime
+  image: ${PAYMENT_IMAGE:?Укажите образ с неизменяемым тегом или digest}
+  user: "10001:10001"
+  read_only: true
+  tmpfs: ["/tmp:size=16m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 128
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 40s
+
+x-database: &database
+  DATABASE_URL: ${DATABASE_URL:?Укажите внешний PostgreSQL DSN}
+  DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
+  DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-10}
+  DATABASE_POOL_TIMEOUT: ${DATABASE_POOL_TIMEOUT:-5}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  api:
+    <<: *runtime
+    environment:
+      <<: *database
+      API_KEY: ${API_KEY:?Укажите ключ API}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  consumer:
+    <<: *runtime
+    command: ["payment-worker"]
+    environment:
+      <<: *database
+      RABBITMQ_URL: ${RABBITMQ_URL:?Укажите внешний AMQP DSN}
+      OUTBOX_POLL_INTERVAL: ${OUTBOX_POLL_INTERVAL:-0.5}
+      OUTBOX_BATCH_SIZE: ${OUTBOX_BATCH_SIZE:-50}
+      PUBLISH_TIMEOUT: ${PUBLISH_TIMEOUT:-5}
+      WEBHOOK_TIMEOUT: ${WEBHOOK_TIMEOUT:-5}
+      RETRY_BASE_DELAY: ${RETRY_BASE_DELAY:-2}
+      WORKER_HEALTH_PORT: 8081
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health/ready', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  migrate:
+    <<: *runtime
+    profiles: [migration]
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Укажите внешний PostgreSQL DSN}
