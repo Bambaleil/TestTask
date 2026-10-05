@@ -13,7 +13,23 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Ruff lint
+        run: uv run --frozen ruff check .
+      - name: Ruff format
+        run: uv run --frozen ruff format --check .
+      - name: Strict typing
+        run: uv run --frozen mypy
+
+  tests:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -48,7 +64,6 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen
-      - run: uv run --frozen pre-commit run --all-files
       - run: uv run --frozen pytest --cov --cov-report=term-missing --cov-report=xml
       - uses: actions/upload-artifact@v4
         with:
