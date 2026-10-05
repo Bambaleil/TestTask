@@ -14,10 +14,10 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
           enable-cache: true
@@ -30,7 +30,7 @@ jobs:
         run: uv run --frozen mypy
 
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17-alpine
@@ -58,14 +58,14 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://payments:test-postgres-password@localhost:5432/payments_test
       TEST_RABBITMQ_URL: amqp://payments:test-rabbit-password@localhost:5672/
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen
       - run: uv run --frozen pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=100
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: coverage-python-3.12
           path: coverage.xml
@@ -80,16 +80,16 @@ jobs:
           fail_ci_if_error: true
 
   documentation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen --group docs
       - run: uv run --frozen --group docs mkdocs build --strict
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: documentation
           path: .build/docs/
