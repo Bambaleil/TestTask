@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import func, select
 
 from payment_service.core.db.connection import SessionFactory
+from payment_service.core.errors.exceptions import PersistenceConflictError
 from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
 from payment_service.modules.payments.dao.tables import PaymentRecord as Payment
@@ -69,3 +70,22 @@ async def test_get(sessions: SessionFactory, payment_data: PaymentCreate, exists
     else:
         with pytest.raises(PaymentNotFoundError):
             await service.get(uuid4())
+
+
+class TestUnrelatedPersistenceConflict:
+    """Проверки конфликта хранения, не вызванного конкурентным клиентским запросом."""
+
+    async def test_create(self, sessions: SessionFactory, payment_data: PaymentCreate) -> None:
+        """Сохраняет исходную ошибку, если после конфликта нет платежа с таким ключом."""
+        error = PersistenceConflictError()
+        with patch(
+            "payment_service.modules.payments.dao.sqlalchemy.PaymentDAO.add", side_effect=error
+        ):
+            with pytest.raises(PersistenceConflictError) as raised:
+                await PaymentRepository(PaymentUnitOfWorkFactory(sessions)).create(
+                    payment_data.to_command(), "unrelated-conflict"
+                )
+        assert raised.value is error
+        async with sessions() as session:
+            assert await session.scalar(select(func.count()).select_from(Payment)) == 0
+            assert await session.scalar(select(func.count()).select_from(OutboxEvent)) == 0

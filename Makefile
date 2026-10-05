@@ -45,4 +45,4 @@ local-logs:
 local-status:
 	$(OBSERVABILITY_COMPOSE) ps
 docker-test:
-	$(LOCAL_COMPOSE) --profile test run --build --rm tests pytest --cov --cov-report=term-missing
+	$(LOCAL_COMPOSE) --profile test run --build --rm tests pytest --cov --cov-report=term-missing --cov-fail-under=100

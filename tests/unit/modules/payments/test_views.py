@@ -7,9 +7,11 @@ import pytest
 from payment_service.core.db.connection import SessionFactory
 from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
+from payment_service.modules.payments.domain.constants import PaymentStatus
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.views import create_payment
 from payment_service.server import create_app
-from tests.fakes import ServiceSettings
+from tests.fakes import MemoryUnitOfWorkFactory, ServiceSettings
 
 
 @pytest.fixture
@@ -118,3 +120,22 @@ async def test_health_router(client: httpx.AsyncClient) -> None:
     assert (
         await client.get("/api/v1/payments/00000000-0000-0000-0000-000000000000")
     ).status_code == 401
+
+
+class TestAcceptedPayment:
+    """Проверки ответа HTTP-адаптера для нового и уже завершённого платежа."""
+
+    @pytest.mark.parametrize("completed", [False, True], ids=["new", "completed-repeat"])
+    async def test_create_payment(self, payment_data: PaymentCreate, completed: bool) -> None:
+        """Возвращает исходные UUID и дату, сохраняя финальный статус повторного запроса."""
+        factory = MemoryUnitOfWorkFactory()
+        repository = PaymentRepository(factory)
+        if completed:
+            original = await repository.create(payment_data.to_command(), "accepted-payment")
+            factory.state.payments[original.id].status = PaymentStatus.SUCCEEDED
+        accepted = await create_payment(payment_data, "accepted-payment", repository)
+        assert accepted.status == (PaymentStatus.SUCCEEDED if completed else PaymentStatus.PENDING)
+        assert len(factory.state.payments) == len(factory.state.events) == 1
+        saved = factory.state.payments[accepted.payment_id]
+        assert accepted.created_at == saved.created_at
+        assert next(iter(factory.state.events.values())).aggregate_id == accepted.payment_id

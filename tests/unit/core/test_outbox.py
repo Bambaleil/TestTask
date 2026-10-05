@@ -1,5 +1,7 @@
+import asyncio
+import logging
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy import select
@@ -11,7 +13,7 @@ from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.repository import PaymentRepository
-from tests.fakes import FakePublisher, ServiceSettings
+from tests.fakes import FakePublisher, MemoryUnitOfWorkFactory, ServiceSettings
 
 
 @pytest.mark.parametrize("failures", [0, 1])
@@ -84,3 +86,44 @@ class TestDelayedEvent:
             == 0
         )
         assert publisher.calls == []
+
+
+async def test_run(caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Продолжает опрос после сбоя БД, соблюдает интервал и не раскрывает текст ошибки."""
+    dispatcher = OutboxDispatcher(
+        MemoryUnitOfWorkFactory(), FakePublisher(), OutboxOptions(poll_interval=0.25)
+    )
+    # Alembic меняет состояние существующих логгеров в интеграционных тестах.
+    monkeypatch.setattr(logging.getLogger("payment_service.core.events.outbox"), "disabled", False)
+    with (
+        patch.object(
+            dispatcher, "dispatch_batch", side_effect=[RuntimeError("secret-dsn"), 0]
+        ) as dispatch,
+        patch(
+            "payment_service.core.events.outbox.asyncio.sleep",
+            new_callable=AsyncMock,
+            side_effect=[None, asyncio.CancelledError()],
+        ) as sleep,
+    ):
+        with pytest.raises(asyncio.CancelledError):
+            await dispatcher.run()
+    assert dispatch.await_count == 2
+    assert [call.args for call in sleep.await_args_list] == [(0.25,), (0.25,)]
+    assert "outbox_iteration_failed error=RuntimeError" in caplog.text
+    assert "secret-dsn" not in caplog.text
+
+
+class TestCancelledDispatch:
+    """Проверки немедленного завершения фоновой работы при отмене процесса."""
+
+    async def test_run(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Не превращает отмену публикации в ошибку инфраструктуры или новую итерацию."""
+        dispatcher = OutboxDispatcher(MemoryUnitOfWorkFactory(), FakePublisher(), OutboxOptions())
+        with (
+            patch.object(dispatcher, "dispatch_batch", side_effect=asyncio.CancelledError),
+            patch("payment_service.core.events.outbox.asyncio.sleep") as sleep,
+        ):
+            with pytest.raises(asyncio.CancelledError):
+                await dispatcher.run()
+        sleep.assert_not_awaited()
+        assert "outbox_iteration_failed" not in caplog.text
