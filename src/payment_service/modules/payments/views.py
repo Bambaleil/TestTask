@@ -5,14 +5,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, status
 
-from payment_service.modules.payments.dao.models import (
+from payment_service.modules.payments.dependencies import get_payment_repository
+from payment_service.modules.payments.domain.entities import Payment
+from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import (
     PaymentAccepted,
     PaymentCreate,
     PaymentDetails,
 )
-from payment_service.modules.payments.dependencies import get_payment_repository
-from payment_service.modules.payments.domain.entities import Payment
-from payment_service.modules.payments.repository import PaymentRepository
 
 router = APIRouter(prefix="/api/v1/payments", tags=["Платежи"])
 

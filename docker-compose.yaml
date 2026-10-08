@@ -1,0 +1,5 @@
+name: testtask
+
+# Единая конфигурация локального стенда сохраняется в deploy/local.
+include:
+  - path: deploy/local/compose.yaml

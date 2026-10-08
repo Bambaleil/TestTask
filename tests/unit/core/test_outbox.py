@@ -9,10 +9,10 @@ from sqlalchemy import select
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.events.outbox import OutboxDispatcher, OutboxOptions
 from payment_service.core.utils.time import utcnow
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from tests.fakes import FakePublisher, MemoryUnitOfWorkFactory, ServiceSettings
 
 

@@ -37,12 +37,32 @@
       heading_level: 2
       show_root_full_path: false
 
-::: payment_service.modules.payments.dao.models
+::: payment_service.modules.payments.schemas.payment_create
     options:
       heading_level: 2
       show_root_full_path: false
 
-::: payment_service.modules.payments.dao.tables
+::: payment_service.modules.payments.schemas.payment_accepted
+    options:
+      heading_level: 2
+      show_root_full_path: false
+
+::: payment_service.modules.payments.schemas.payment_details
+    options:
+      heading_level: 2
+      show_root_full_path: false
+
+::: payment_service.modules.payments.schemas.payment_event_message
+    options:
+      heading_level: 2
+      show_root_full_path: false
+
+::: payment_service.modules.payments.dao.tables.payment_record
+    options:
+      heading_level: 2
+      show_root_full_path: false
+
+::: payment_service.modules.payments.dao.tables.outbox_record
     options:
       heading_level: 2
       show_root_full_path: false

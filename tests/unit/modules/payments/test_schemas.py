@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from payment_service.core.utils.retry import retry_delay
-from payment_service.modules.payments.dao.models import PaymentCreate
+from payment_service.modules.payments.schemas import PaymentCreate
 
 
 @pytest.mark.parametrize("amount", ["123.450", "123.45"])

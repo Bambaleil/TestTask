@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.db.models import Base
 from payment_service.core.utils.time import utcnow
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.sqlalchemy import OutboxDAO as OutboxRepository
 from payment_service.modules.payments.dao.sqlalchemy import PaymentDAO
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
@@ -19,6 +18,7 @@ from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkF
 from payment_service.modules.payments.domain.entities import Payment as PaymentEntity
 from payment_service.modules.payments.domain.exceptions import IdempotencyConflictError
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 
 pytestmark = pytest.mark.integration
 

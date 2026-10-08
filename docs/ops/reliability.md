@@ -86,3 +86,27 @@ HTTP-заголовков и тела ответа. При публичном р
 
 Заголовки: `Idempotency-Key` и `X-Webhook-Event-ID`, оба равны `event_id`.
 
+
+## Как подтверждаются гарантии
+
+`PaymentUnitOfWork` создаёт `PaymentDAO` и `OutboxDAO` на одной `AsyncSession`.
+`PaymentRepository.create` выполняет обе записи и один явный commit. Методы
+DAO вызывают flush; граница фиксации остаётся в Unit of Work. При конфликте
+уникального ключа неуспешная транзакция закрывается, а чтение существующего
+платежа происходит в новой транзакции.
+
+| Гарантия / окно отказа | Интеграционная проверка |
+| --- | --- |
+| Платёж и событие фиксируются вместе; другая сессия не видит промежуточные INSERT | `test_transactions.py::test_create` |
+| Ошибка записи Outbox, commit или отмена откатывает обе записи | `test_transactions.py::TestCreateRollback::test_create` |
+| Конкурентные INSERT создают один платёж и одно событие; другое тело получает конфликт | `test_postgres.py::test_create` |
+| Два диспетчера не забирают одну заблокированную запись | `test_postgres.py::test_get_pending` |
+| Ошибка записи retry/DLQ сохраняет текущую попытку незавершённой и вызывает NACK | `test_transactions.py::TestRetryRollback::test_process_payment` |
+| Два обработчика одного события вызывают шлюз и webhook один раз | `test_transactions.py::TestConcurrentProcessing::test_process` |
+| HTTP 500 запускает retry с задержкой или DLQ после третьей попытки | `test_delivery_failures.py::test_process_payment` |
+| RabbitMQ принял событие, а commit публикации упал: повтор имеет тот же message_id | `test_delivery_failures.py::TestCommitAfterConfirm::test_dispatch_batch` |
+| Сбой записи retry приводит к настоящему AMQP redelivery после NACK | `test_delivery_failures.py::TestNackAfterStorageFailure::test_process_payment` |
+| Webhook принят, но commit упал: повторяется уведомление с тем же ключом, оплата сохраняется | `test_delivery_failures.py::TestWebhookCommitFailure::test_process` |
+
+Все указанные файлы находятся в `tests/integration/`. Команды и границы
+моделирования отказов описаны в [руководстве по тестированию](../guides/testing.md).

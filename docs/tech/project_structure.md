@@ -7,6 +7,7 @@ src/payment_service/                    # Код приложения
 migrations/                             # Изменения схемы БД
 tests/                                  # Изолированные и интеграционные тесты
 docs/                                   # Исходники документации
+docker-compose.yaml                     # Запуск локального стенда из корня
 deploy/
 ├── local/
 │   ├── compose.yaml                    # Локальный PostgreSQL, RabbitMQ и сервис
@@ -43,9 +44,16 @@ src/payment_service/
     ├── repository.py            # Создание, чтение, идемпотентность
     ├── processing.py            # Оплата, уведомление, retry/DLQ
     ├── domain/                  # Сущности, события, ошибки и порты
+    ├── schemas/                 # Внешние контракты, одна DTO на файл
+    │   ├── payment_create.py    # Запрос создания платежа
+    │   ├── payment_accepted.py  # Ответ 202
+    │   ├── payment_details.py   # Подробный ответ
+    │   ├── payment_event_message.py # Входное сообщение RabbitMQ
+    │   └── types.py             # Общие типы валидации
     ├── dao/
-    │   ├── models.py            # Валидируемые DTO API и сообщения
-    │   ├── tables.py            # SQLAlchemy records: payments, outbox
+    │   ├── tables/             # Одна ORM-модель на файл
+    │   │   ├── payment_record.py # Таблица payments
+    │   │   └── outbox_record.py  # Таблица outbox
     │   ├── sqlalchemy.py        # SQL и преобразование records ↔ entities
     │   ├── unit_of_work.py      # Согласованные DAO одной транзакции
     │   ├── gateway.py           # Эмулятор внешнего провайдера

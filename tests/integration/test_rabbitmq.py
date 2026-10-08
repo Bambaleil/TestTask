@@ -4,7 +4,6 @@ from contextlib import suppress
 from uuid import uuid4
 
 import pytest
-from aio_pika import IncomingMessage
 from faststream import AckPolicy
 from faststream.rabbit import RabbitBroker
 from sqlalchemy import select
@@ -12,7 +11,6 @@ from sqlalchemy import select
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.events.outbox import OutboxDispatcher, OutboxOptions
 from payment_service.core.events.rabbitmq import RabbitEventPublisher
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.domain.constants import DEAD_TOPIC, NEW_TOPIC
@@ -20,20 +18,11 @@ from payment_service.modules.payments.handlers import topology as messaging
 from payment_service.modules.payments.handlers.rabbitmq import PaymentMessageHandler, decode_event
 from payment_service.modules.payments.processing import PaymentProcessor
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from tests.fakes import FakeGateway, FakeWebhooks, ServiceSettings
+from tests.integration.helpers import receive_dead_message
 
 pytestmark = pytest.mark.integration
-
-
-async def receive_dead_message(broker: RabbitBroker) -> IncomingMessage:
-    """Дождаться сообщения из изолированной DLQ с ограниченным таймаутом."""
-    queue = await broker.declare_queue(messaging.DEAD_QUEUE)
-    async with asyncio.timeout(10):
-        while True:
-            message = await queue.get(fail=False)
-            if message is not None:
-                return message
-            await asyncio.sleep(0.02)
 
 
 @pytest.mark.parametrize("webhook_failures", [0, 1, 3])

@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from payment_service import server
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.db.models import Base
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from tests.fakes import ServiceSettings
 
 

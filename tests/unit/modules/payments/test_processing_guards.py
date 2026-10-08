@@ -4,12 +4,12 @@ from uuid import uuid4
 import pytest
 
 from payment_service.core.utils.time import utcnow
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.domain.constants import DEAD_TOPIC, PaymentStatus
 from payment_service.modules.payments.domain.events import PaymentEvent, WebhookPayload
 from payment_service.modules.payments.domain.exceptions import InvalidEventError
 from payment_service.modules.payments.processing import PaymentProcessor
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from tests.fakes import FakeGateway, FakeWebhooks, MemoryUnitOfWorkFactory
 
 

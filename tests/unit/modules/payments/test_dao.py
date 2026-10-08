@@ -4,10 +4,10 @@ import pytest
 
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.errors.exceptions import RecordNotFoundError
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.sqlalchemy import OutboxDAO, PaymentDAO
 from payment_service.modules.payments.domain.entities import Payment
 from payment_service.modules.payments.domain.events import new_payment_event
+from payment_service.modules.payments.schemas import PaymentCreate
 
 
 class TestMissingPayment:

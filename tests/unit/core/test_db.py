@@ -6,11 +6,11 @@ from sqlalchemy import func, select
 from payment_service.core.db.connection import SessionFactory, create_engine
 from payment_service.core.db.unit_of_work import SQLAlchemyUnitOfWork
 from payment_service.core.errors.exceptions import PersistenceConflictError
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import PaymentRecord
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.domain.entities import Payment
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from tests.fakes import ServiceSettings
 
 

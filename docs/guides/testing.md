@@ -11,7 +11,7 @@ make test                     # Быстрые тесты без внешних 
 Интеграционные тесты без установки Python-зависимостей на хосте:
 
 ```bash
-docker compose --env-file deploy/local/.env -f deploy/local/compose.yaml --profile test run --build --rm tests
+docker compose --profile test run --build --rm tests
 ```
 
 Все тесты и общий отчёт покрытия в контейнере:
@@ -37,3 +37,37 @@ API-ключ обязателен и должен содержать миним�
 
 Использованные контракты FastStream: [публикация RabbitBroker](https://faststream.ag2.ai/latest/api/faststream/rabbit/RabbitBroker/)
 и [ручное подтверждение сообщений](https://faststream.ag2.ai/latest/getting-started/acknowledgement/).
+
+## Критические сценарии
+
+Быстрые тесты используют SQLite и подменённые внешние адаптеры. Интеграционные
+тесты применяют настоящие миграции PostgreSQL и отдельные очереди RabbitMQ.
+Каждый тест получает собственную схему БД и топологию брокера, которые удаляются
+после проверки. Отсутствие URL внешних сервисов приводит к пропуску интеграционных
+тестов; такой запуск не подтверждает работу PostgreSQL-блокировок или AMQP.
+
+```bash
+# Транзакции, отказ доставки и конкуренция на настоящих сервисах
+docker compose --profile test run --build --rm tests pytest \
+  tests/integration/test_transactions.py tests/integration/test_delivery_failures.py -v
+```
+
+В `tests/integration/test_transactions.py` проверяются общая сессия платежа и
+Outbox, невидимость незавершённой транзакции, полный rollback при ошибке INSERT,
+ошибке commit и отмене, атомарность retry/DLQ и одновременная обработка одного
+события. В `test_postgres.py` проверяются конкурентные запросы создания платежа
+с одинаковым ключом и `FOR UPDATE SKIP LOCKED`.
+
+В `tests/integration/test_delivery_failures.py` проверяются HTTP 500 через
+настоящий HTTPX-адаптер, экспоненциальные задержки, DLQ после третьей попытки,
+повторная публикация после RabbitMQ confirm и сбоя commit, настоящий NACK с
+повторной доставкой и повтор webhook после успешного HTTP-ответа и сбоя commit.
+HTTP-ответы управляются через `httpx.MockTransport`; PostgreSQL и RabbitMQ
+работают без подмены. Точки отказа БД вводятся после настоящих INSERT/flush.
+
+Полный запуск `make docker-test` и CI требуют 100% покрытия строк и ветвей кода
+приложения. Это дополнительная проверка; процент покрытия сам по себе не
+доказывает надёжность. Гарантии подтверждают проверяемые состояния БД,
+AMQP-подтверждения и количество внешних вызовов. Перезапуск обработчика
+проверяется созданием нового экземпляра с чтением долговечного состояния;
+принудительное завершение контейнера или разрыв сети эти тесты не моделируют.

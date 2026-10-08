@@ -7,9 +7,9 @@ import logging
 from faststream.rabbit import RabbitMessage
 from pydantic import ValidationError
 
-from payment_service.modules.payments.dao.models import PaymentEventMessage
 from payment_service.modules.payments.domain.exceptions import InvalidEventError
 from payment_service.modules.payments.processing import PaymentProcessor
+from payment_service.modules.payments.schemas import PaymentEventMessage
 
 logger = logging.getLogger(__name__)
 

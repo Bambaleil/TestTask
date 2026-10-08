@@ -28,15 +28,19 @@
 
 ```bash
 cp deploy/local/.env.example deploy/local/.env
-make local-up
-make local-status
-make local-logs
+docker compose up -d --build
+docker compose ps
+docker compose logs -f api consumer
 ```
 
 API: `http://localhost:8000`. Платёжные маршруты, `/docs` и `/openapi.json`
 требуют `X-API-Key`; создание платежа — также `Idempotency-Key`.
 `/health/live` и `/health/ready` доступны без ключа.
 [Примеры запросов](docs/guides/quickstart.md).
+
+Требуется Docker Compose 2.20+. Корневой `docker-compose.yaml` подключает
+`deploy/local/compose.yaml`; параметры читаются из `deploy/local/.env`.
+Команды `make local-up`, `make local-status`, `make local-logs` также доступны.
 
 Опциональная локальная Grafana:
 

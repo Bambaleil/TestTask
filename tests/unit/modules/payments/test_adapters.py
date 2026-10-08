@@ -7,11 +7,11 @@ import httpx
 import pytest
 
 from payment_service.modules.payments.dao.gateway import SimulatedGateway
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.webhook import HttpWebhookSender
 from payment_service.modules.payments.domain.constants import Currency, PaymentStatus
 from payment_service.modules.payments.domain.entities import Payment
 from payment_service.modules.payments.domain.events import WebhookPayload
+from payment_service.modules.payments.schemas import PaymentCreate
 
 
 @pytest.mark.parametrize("status_code", [200, 204, 302, 400, 500])

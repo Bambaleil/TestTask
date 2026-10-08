@@ -26,13 +26,14 @@ SQLAlchemy-сессию, HTTP-клиент или RabbitMQ-подключени�
 | `domain` | Dataclass-сущности, события, порты, бизнес-ошибки | ORM, HTTP-клиент, FastAPI, FastStream, Pydantic |
 | `repository`, `processing` | Идемпотентность, стадии обработки, границы commit | SQL, HTTP-коды, конкретные DAO и соединения |
 | `views`, `handlers` | Валидация, DTO → command/event, вызов бизнес-операций | SQL, принятие решений о результате оплаты |
+| `schemas` | Внешние HTTP- и RabbitMQ-контракты, одна DTO на файл | SQL, соединения, бизнес-стратегии |
 | `dao` | SQL, преобразование records ↔ entities, внешние вызовы | Вызов repository, выбор бизнес-стратегии retry |
 | `container`, `module` | Сборка и регистрация зависимостей | Правила изменения платежного статуса |
 
 ## Сущность, DTO и запись ORM
 
 - `domain.entities.Payment` — состояние платежа, доступное бизнес-логике.
-- `dao.models.PaymentCreate` — валидация внешнего HTTP-запроса.
+- `schemas.payment_create.PaymentCreate` — валидация внешнего HTTP-запроса.
 - `domain.entities.CreatePaymentCommand` — нормализованный вход бизнес-операции.
 - `dao.tables.PaymentRecord` — соответствие колонкам PostgreSQL.
 

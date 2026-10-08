@@ -6,7 +6,6 @@ from sqlalchemy import func, select
 
 from payment_service.core.db.connection import SessionFactory
 from payment_service.core.errors.exceptions import PersistenceConflictError
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.tables import OutboxRecord as OutboxEvent
 from payment_service.modules.payments.dao.tables import PaymentRecord as Payment
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
@@ -15,6 +14,7 @@ from payment_service.modules.payments.domain.exceptions import (
     PaymentNotFoundError,
 )
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 
 
 @pytest.mark.parametrize("conflict", [False, True])

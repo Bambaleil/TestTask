@@ -5,10 +5,10 @@ import httpx
 import pytest
 
 from payment_service.core.db.connection import SessionFactory
-from payment_service.modules.payments.dao.models import PaymentCreate
 from payment_service.modules.payments.dao.unit_of_work import PaymentUnitOfWorkFactory
 from payment_service.modules.payments.domain.constants import PaymentStatus
 from payment_service.modules.payments.repository import PaymentRepository
+from payment_service.modules.payments.schemas import PaymentCreate
 from payment_service.modules.payments.views import create_payment
 from payment_service.server import create_app
 from tests.fakes import MemoryUnitOfWorkFactory, ServiceSettings
